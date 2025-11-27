@@ -24,6 +24,15 @@ architecture simulation of rx_tb is
     signal baud_tick: std_logic;
     signal dout: std_logic_vector(BITWIDTH - 1 downto 0); -- received data out
     
+    signal tx_busy: std_logic;
+    signal tx_write: std_logic;
+    signal sendtotxdout: std_logic_vector(BITWIDTH - 1 downto 0);
+    signal tx_dout: std_logic;
+    signal fifo_full: std_logic;
+    signal tf_dout: std_logic_vector(BITWIDTH - 1 downto 0);
+    signal tf_empty: std_logic;
+
+    
 
     -- expected byte
     constant EXP_BYTE : std_logic_vector(0 to BITWIDTH-1):= "11000001";--x"41"; -- 'A' '01000001'
@@ -58,7 +67,7 @@ architecture simulation of rx_tb is
         par_bit_temp => par_bit_temp
             );
 
-        fifo: entity work.fifo
+        rxfifo: entity work.fifo
             port map (
                 clk => clk,
                 rst => rst,
@@ -70,6 +79,38 @@ architecture simulation of rx_tb is
                 full => open,
                 rec_byte => queue_content
             );
+        
+        utx: entity work.utx
+            port map (
+                byte_in => tf_dout,
+                baud_tick => baud_tick,
+                pen => pen,
+                rst => rst,
+                busy => tx_busy,
+                serial_out => tx_dout,
+                fifo_empty => tf_empty
+            );
+        
+        txfifo: entity work.fifo
+            port map (
+                clk => clk,
+                rst => rst,
+                r => tx_busy,
+                w => tx_write,
+                din => sendtotxdout,
+                dout => tf_dout,
+                empty => tf_empty,
+                full => fifo_full,
+                rec_byte => open
+            );
+        
+        sendtotx_inst: entity work.sendtotx
+         port map(
+            clk => clk,
+            dout => sendtotxdout,
+            write => tx_write,
+            fifo_full => fifo_full
+        );
         stim: process 
             procedure send_bit(b : std_logic) is -- send a bit on serial_in
             begin
