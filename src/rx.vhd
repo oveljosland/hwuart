@@ -112,9 +112,9 @@ begin
 						smp_idx <= 0;
 						/* decide value by majority */
 						if maj_cnt >= (MAJVOTES + 1) / 2 then
-							data_out <= data_out(BITWIDTH - 2 downto 0) & '1';
+							data_out <= '1' & data_out(BITWIDTH - 1 downto 1);
 						else
-							data_out <= data_out(BITWIDTH - 2 downto 0) & '0';
+							data_out <= '0' & data_out(BITWIDTH - 1 downto 1);
 						end if;
 						maj_cnt <= 0;
 						if bit_idx < BITWIDTH - 1 then
