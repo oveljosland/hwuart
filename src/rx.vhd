@@ -153,17 +153,22 @@ begin
 					end if;
 
 				when stopbit =>
+					if smp_idx >= LO and smp_idx <= HI then
+						if din = '1' and maj_cnt < MAJVOTES then
+							maj_cnt <= maj_cnt + 1;
+						end if;
+					end if;
 					if smp_idx < SMP_PER_BIT - 1 then
 						smp_idx <= smp_idx + 1;
 					else /* done sampling */
 						if maj_cnt >= (MAJVOTES + 1) / 2 then
-							/* stop bit must be high */
-							s <= flush; /* framing error, discard data */
-						else
 							smp_idx <= 0;
 							dout <= data_out; /* put data out */
 							data_valid <= '1';
 							s <= idle;
+						else
+							/* stop bit must be high */
+							s <= flush; /* framing error, discard data */
 						end if;
 					end if;
 
