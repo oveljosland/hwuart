@@ -24,7 +24,7 @@ entity utx is
 		pen: in std_logic; /* parity enable */
 		rst: in std_logic;
 		busy: out std_logic:= '0';
-		serial_out: out std_logic;
+		serial_out: out std_logic:= '1';
 		fifo_empty: in std_logic
 	);
 end entity;
@@ -32,9 +32,9 @@ end entity;
 architecture rtl of utx is
 	signal msg: std_logic_vector(BITWIDTH - 1 downto 0);
 	signal bit_idx: natural range 0 to BITWIDTH - 1 := 0;
-	signal idx : natural range 0 to (BITWIDTH+3)*SMP_PER_BIT - 1 := 0; -- start + data + parity + stop
+	signal idx : natural range 0 to (BITWIDTH+3)*SMP_PER_BIT := 0; -- start + data + parity + stop
 begin
-	send_message: process(baud_tick, byte_in, fifo_empty)
+	send_message: process(baud_tick, byte_in, fifo_empty, idx)
 	begin
 		if rst = SYSRESET then
 			serial_out <= '1'; -- idle state

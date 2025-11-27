@@ -41,8 +41,8 @@ architecture rtl of top is
 
 	signal baud_tick: std_logic;
 	signal baud_change: std_logic;
-	signal baudrate: positive range 100_000 to 1_000_000 := 100_000;
-
+	signal baudrate: integer range 0 to 9 := 0;
+ 
 	/* rx io */
 	signal perr: std_logic;
 	signal rx_dout: std_logic_vector(BITWIDTH - 1 downto 0);

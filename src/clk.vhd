@@ -12,38 +12,57 @@ entity baud_clock is
         inc_btn    : in  std_logic;  -- button to increase baud
         baud_tick  : out std_logic;
 		baud_change: out std_logic := '0'; -- for display
-		baudrate : out positive range 100_000 to 1_000_000 := 100_000
+		baudrate : out integer range 0 to 9 := 0
     );
 end entity;
-
+---- filepath: c:\Users\mathi\bielsys\innvevd\uart\uart\src\clk.vhd
+-- ...existing code...
 architecture rtl of baud_clock is
-    signal DIV : positive := 1_000_000 * SYS_CLK_FRQ / (SMP_PER_BIT*baudrate)-1;
+    -- small lookup table for divider values (adjust to your actual SYS clock & oversample)
+    type div_table_t is array (0 to 9) of natural;
+    constant DIV_TABLE : div_table_t := (
+        62, 31, 21, 16, 13, 10, 9, 8, 7, 6  -- precomputed divider values
+    );
 
-    signal i        : natural range 0 to 1_000_000 * SYS_CLK_FRQ / (SMP_PER_BIT*1_000_000)-1 := 0;
-    signal clk_out  : std_logic := '0';
+    type baud_table_t is array (0 to 9) of natural;
+    constant BAUD_TABLE : baud_table_t := (
+        100_000, 200_000, 300_000, 400_000, 500_000,
+        600_000, 700_000, 800_000, 900_000, 1_000_000
+    );
 
-    -- debounce & edge detection
-    signal btn_sync, btn_prev : std_logic := '0';
-    signal debounce_cnt       : natural range 0 to 500_000 := 0; -- ~10 ms at 50 MHz
-    signal btn_clean           : std_logic := '0';
+    signal baud_idx      : natural range 0 to 9 := 0;
+    signal DIV           : natural range 0 to 1000 := DIV_TABLE(0);
+    signal counter       : natural range 0 to 1000 := 0;
+    signal clk_out       : std_logic := '0';
+
+    signal btn_sync1     : std_logic := '0';
+    signal btn_sync2     : std_logic := '0';
+    signal btn_prev      : std_logic := '0';
+    signal btn_clean     : std_logic := '0';
+    signal debounce_cnt  : natural range 0 to 500_000 := 0;
+    signal baud_change_pulse : std_logic := '0';
 begin
 
-    -- Button debounce and rising edge detection
-    process(clk, rst)
+    btn_proc: process(clk, rst)
+        variable next_idx : natural range 0 to 9 := 0;
     begin
         if rst = SYSRESET then
-            btn_sync    <= '0';
-            btn_prev    <= '0';
-            debounce_cnt <= 0;
-            btn_clean   <= '0';
+            btn_sync1        <= '0';
+            btn_sync2        <= '0';
+            btn_prev         <= '0';
+            debounce_cnt     <= 0;
+            btn_clean        <= '0';
+            baud_change_pulse<= '0';
+            baud_idx         <= 0;
+            DIV              <= DIV_TABLE(0);
         elsif rising_edge(clk) then
-            -- synchronize button to clock domain
-            btn_sync <= inc_btn;
+            btn_sync1 <= inc_btn;
+            btn_sync2 <= btn_sync1;
 
-            -- debounce counter
-            if btn_sync = '1' then
+            if btn_sync2 = '1' then
                 if debounce_cnt < 500_000 then
                     debounce_cnt <= debounce_cnt + 1;
+                    btn_clean <= '0';
                 else
                     btn_clean <= '1';
                 end if;
@@ -52,43 +71,51 @@ begin
                 btn_clean <= '0';
             end if;
 
-            -- save previous for edge detection
-            btn_prev <= btn_clean;
-
-            -- increment baud rate on rising edge of debounced button
+            -- Register DIV update to break combinatorial path
             if btn_clean = '1' and btn_prev = '0' then
-				baud_change <= '1';
-				DIV <= 1_000_000 * SYS_CLK_FRQ / (SMP_PER_BIT*baudrate)-1;
-                if baudrate + 100_000 > 1_000_000 then
-					DIV <= 1_000_000 * SYS_CLK_FRQ / (SMP_PER_BIT*100_000)-1;
-                    baudrate <= 100_000; -- loop back
+                if baud_idx = 9 then
+                    next_idx := 0;
                 else
-					DIV <= 1_000_000 * SYS_CLK_FRQ / (SMP_PER_BIT*(baudrate+100_000))-1;
-                    baudrate <= baudrate + 100_000;
+                    next_idx := baud_idx + 1;
                 end if;
-			else
-				baud_change <= '0';
+                baud_idx <= next_idx;
+                -- DIV update now happens in registered logic
+            end if;
+            
+            -- Separate DIV assignment to ensure it's registered
+            DIV <= DIV_TABLE(baud_idx);
+            
+            btn_prev <= btn_clean;
+            
+            -- Pulse generation
+            if btn_clean = '1' and btn_prev = '0' then
+                baud_change_pulse <= '1';
+            else
+                baud_change_pulse <= '0';
             end if;
         end if;
     end process;
 
-    -- Baud clock generation
+    -- generate periodic tick (single-cycle pulse)
     gen: process(clk, rst)
     begin
         if rst = SYSRESET then
-            i <= 0;
+            counter <= 0;
             clk_out <= '0';
         elsif rising_edge(clk) then
-            if i = DIV then
-                i <= 0;
-                clk_out <= not clk_out; -- square wave
+            if counter >= DIV then
+                counter <= 0;
+                clk_out <= '1';
             else
-                i <= i + 1;
-                clk_out <= '0';  -- optional: single pulse instead of square wave
+                counter <= counter + 1;
+                clk_out <= '0';
             end if;
         end if;
     end process;
 
-    baud_tick <= clk_out;
+    baud_tick   <= clk_out;
+    baud_change <= baud_change_pulse;
+    baudrate    <= integer(baud_idx);
 
 end architecture;
+-- ...existing code...

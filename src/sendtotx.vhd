@@ -35,7 +35,7 @@ architecture rtl of sendtotx is
     signal i : integer range 0 to 15 := 0;
     signal delay : std_logic := '0';
 begin
-    process(fifo_full)
+    process(fifo_full, clk)
 
     begin
     if rising_edge(clk) then
@@ -48,7 +48,7 @@ begin
             else
                 i <= i + 1;
             end if;
-        elsif delay = '1' then
+        else
             delay <= '0';
             write <= '0';
         end if;
