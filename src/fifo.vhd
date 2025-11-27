@@ -46,6 +46,7 @@ begin
 
         if w = '1' and w_d = '0' and i < LEN then
             queue(wp) <= din;
+            rec_byte <= din;
             wp <= (wp + 1) mod LEN;
             i <= i + 1;
         end if;

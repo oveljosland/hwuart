@@ -31,6 +31,7 @@ architecture simulation of rx_tb is
     signal fifo_full: std_logic;
     signal tf_dout: std_logic_vector(BITWIDTH - 1 downto 0);
     signal tf_empty: std_logic;
+    signal rf_empty: std_logic;
 
     
 
@@ -75,7 +76,7 @@ architecture simulation of rx_tb is
                 w => data_valid,
                 din => dout,
                 dout => open,
-                empty => open,
+                empty => rf_empty,
                 full => open,
                 rec_byte => queue_content
             );
