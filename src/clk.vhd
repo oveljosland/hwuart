@@ -21,7 +21,7 @@ architecture rtl of baud_clock is
     -- small lookup table for divider values (adjust to your actual SYS clock & oversample)
     type div_table_t is array (0 to 9) of natural;
     constant DIV_TABLE : div_table_t := (
-        62, 31, 21, 16, 13, 10, 9, 8, 7, 6  -- precomputed divider values
+        62, 31, 21, 16, 13, 10, 9, 8, 7, 6  
     );
 
     type baud_table_t is array (0 to 9) of natural;
@@ -31,8 +31,8 @@ architecture rtl of baud_clock is
     );
 
     signal baud_idx      : natural range 0 to 9 := 0;
-    signal DIV           : natural range 0 to 1000 := DIV_TABLE(0);
-    signal counter       : natural range 0 to 1000 := 0;
+    signal DIV           : natural range 0 to 6200 := DIV_TABLE(0);
+    signal counter       : natural range 0 to 6200 := 0;
     signal clk_out       : std_logic := '0';
 
     signal btn_sync1     : std_logic := '0';
@@ -47,14 +47,10 @@ begin
         variable next_idx : natural range 0 to 9 := 0;
     begin
         if rst = SYSRESET then
-            btn_sync1        <= '0';
-            btn_sync2        <= '0';
-            btn_prev         <= '0';
-            debounce_cnt     <= 0;
-            btn_clean        <= '0';
-            baud_change_pulse<= '0';
-            baud_idx         <= 0;
-            DIV              <= DIV_TABLE(0);
+            debounce_cnt     <= 1;
+            --baud_change_pulse<= '0';
+            --baud_idx         <= 0;
+            --DIV              <= DIV_TABLE(0);
         elsif rising_edge(clk) then
             btn_sync1 <= inc_btn;
             btn_sync2 <= btn_sync1;
@@ -83,7 +79,10 @@ begin
             end if;
             
             -- Separate DIV assignment to ensure it's registered
-            DIV <= DIV_TABLE(baud_idx);
+            --DIV <= DIV_TABLE(0);
+
+            -- div for 9600baudrate
+            DIV <= 50*1000_000 / (100_000 * SMP_PER_BIT);
             
             btn_prev <= btn_clean;
             

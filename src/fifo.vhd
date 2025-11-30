@@ -65,6 +65,8 @@ status: process(clk, rst) begin
         empty <= '1';
         full <= '0';
     elsif rising_edge(clk) then
+        
+        --dout <= queue(rp);
         if i = 0 then
             empty <= '1';
         else

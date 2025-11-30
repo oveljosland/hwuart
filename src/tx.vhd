@@ -52,7 +52,11 @@ begin
 						serial_out <= msg((idx - SMP_PER_BIT) / SMP_PER_BIT);
 					--parity bit
 					elsif idx < (BITWIDTH + 2) * SMP_PER_BIT then
-						serial_out <= par(msg);
+						if pen = '1' then
+							serial_out <= par(msg);
+						else
+							idx <= (BITWIDTH + 2) * SMP_PER_BIT; --skip parity bit
+						end if;
 					--stop bit
 					elsif idx < (BITWIDTH + 3) * SMP_PER_BIT-1 then
 						serial_out <= '1';

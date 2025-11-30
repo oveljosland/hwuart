@@ -9,7 +9,8 @@ entity sendtotx is
         clk: in std_logic;
         dout: out std_logic_vector(BITWIDTH - 1 downto 0);
         write: out std_logic := '0';
-        fifo_full: in std_logic
+        fifo_full: in std_logic;
+        send_btn: in std_logic
     );
 end entity;
 architecture rtl of sendtotx is
@@ -39,18 +40,20 @@ begin
 
     begin
     if rising_edge(clk) then
-        if fifo_full = '0' and delay = '0' then
-            delay <= '1';
-            dout <= message(i);
-            write <= '1';
-            if i = 15 then
-                i <= 0;
+        if send_btn = '1' then
+            if fifo_full = '0' and delay = '0' then
+                delay <= '1';
+                dout <= message(i);
+                write <= '1';
+                if i = 15 then
+                    i <= 0;
+                else
+                    i <= i + 1;
+                end if;
             else
-                i <= i + 1;
+                delay <= '0';
+                write <= '0';
             end if;
-        else
-            delay <= '0';
-            write <= '0';
         end if;
     end if;
     end process;

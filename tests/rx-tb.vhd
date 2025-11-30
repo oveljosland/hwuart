@@ -110,7 +110,8 @@ architecture simulation of rx_tb is
             clk => clk,
             dout => sendtotxdout,
             write => tx_write,
-            fifo_full => fifo_full
+            fifo_full => fifo_full,
+            send_btn => '1'
         );
         stim: process 
             procedure send_bit(b : std_logic) is -- send a bit on serial_in

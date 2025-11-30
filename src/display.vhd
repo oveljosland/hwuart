@@ -87,6 +87,7 @@ begin
 			read_fifo <= '0';
 		elsif rising_edge(clk) then
 		delay_counter <= delay_counter + 1;
+		read_fifo <= '0';
 		if baud_change = '1' then
 			baud_change_delay <= '1';
 		end if;
@@ -132,14 +133,14 @@ begin
 				-- display baud rate on seg5..seg0
 			elsif fifo_empty = '0' then -- if fifo not empty add character and shift
 				read_fifo <= '1';
-				seg0 <= char_to_sevenseg("01000111");--char_to_sevenseg(char);
+				seg0 <= char_to_sevenseg(char);
 				seg1 <= seg0;
 				seg2 <= seg1;
 				seg3 <= seg2;
 				seg4 <= seg3;
 				seg5 <= seg4;
 			else
-				seg0 <= char_to_sevenseg("01000101");--char_to_sevenseg(char);
+				seg0 <= "0010000";--char_to_sevenseg(char);
 				seg1 <= seg0;
 				seg2 <= seg1;
 				seg3 <= seg2;

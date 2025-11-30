@@ -22,6 +22,7 @@ entity top is
 		rst: in std_logic; /* SYSRESET defined in pkg */
 		pen: in std_logic; /* parity enable */ 
 		inc_btn: in std_logic; /* button to increase baud rate */
+		send_btn: in std_logic; /* button to send predetermined string */
 
 		rx: in std_logic := '0'; 
 		tx: out std_logic := '0';
@@ -141,7 +142,8 @@ begin
 			clk => clk,
 			dout => tf_din,
 			fifo_full => tf_full,
-			write => tf_write
+			write => tf_write,
+			send_btn => send_btn
 		);
 	/* put some characters on the display */
 	display_test: process(clk, rst)
